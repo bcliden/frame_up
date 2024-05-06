@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "frame-up"
+version = "0.0.1-beta"              # or dynamic from git?
+authors = [{ name="Benjamin Liden", email="lidenb@oregonstate.edu" }]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">3.10"
+dependencies = ["pillow"]
+
+[project.urls]
+Homepage = "https://github.com/bcliden/frame_up"
+Issues = "https://github.com/bcliden/frame_up/issues"
+
+[project.optional-dependencies]
+gui = ["PySide6"]                   # is installing like this too confusing?
+
+
+[tool.setuptools.package-data]
+# mypkg = ["*.txt"]
+"frame-up.frames" = ["*.jpeg"]
+
+[project.scripts]
+# add one here?
+
+[project.gui-scripts]
+# maybe just here
