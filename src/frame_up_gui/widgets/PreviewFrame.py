@@ -105,7 +105,7 @@ class PreviewFrame(QtWidgets.QGroupBox):
         self.image_canvas.setPixmap(self.scaled_pixmap)
 
     @QtCore.Slot(str)
-    def load_file(self, path):
+    def load_file(self, path: str):
         self.reset()
         
         self.original_image = open_from_disk(path)

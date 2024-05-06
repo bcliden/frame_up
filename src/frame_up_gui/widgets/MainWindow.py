@@ -203,4 +203,4 @@ class MainWindow(QtWidgets.QMainWindow):
         # should only ever be a single image URL
         for url in urls:
             print("dropped: ", url)
-            self.imagePathChanged(url)
+            self.imagePathChanged(url.toString())

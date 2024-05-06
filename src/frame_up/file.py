@@ -18,18 +18,17 @@ def open_from_disk(path: str) -> Image:
 
 def get_suggested_filepath(directory: Path, filename: str) -> Path:
     path = directory / filename
-    print("checking if ", path, " is safe to save into...")
 
     if path.exists():
-        name, ext = filename.split(".")
+        name, ext = filename.rsplit(".", maxsplit=1)
         try:
-            name, _, idx = name.split("_")
-            idx = int(idx)
+            # is it in this program's format?
+            name, _, idx = name.rsplit("_", maxsplit=2)
+            idx = int(idx) + 1
         except ValueError as e:
             print(e)
             # may not have been in initial format
             idx = 0
-        idx += 1
         return get_suggested_filepath(directory, f"{name}_framed_{idx}.{ext}")
 
     return path

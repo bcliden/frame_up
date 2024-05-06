@@ -28,7 +28,10 @@ class CentralLayout(QtWidgets.QWidget):
 
         @QtCore.Slot(str)
         def input_change(path: str):
-            input_widget.setText(path)
+            if path is not None and len(path) > 0:
+                print("setting input to ", path)
+                input_widget.setText(path)
+            
         ImagePathChanged.listen(input_change)
 
         input_layout.addWidget(input_widget)
