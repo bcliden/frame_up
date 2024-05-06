@@ -111,7 +111,7 @@ class MainWindow(QtWidgets.QMainWindow):
     """
     Signals
     """
-    def imagePathChanged(self, path):
+    def imagePathChanged(self, path: str):
         ImagePathChanged.broadcast(path)
 
     def exportPathChanged(self, path):
@@ -201,6 +201,9 @@ class MainWindow(QtWidgets.QMainWindow):
         urls = md.urls()
 
         # should only ever be a single image URL
+        assert len(urls) == 1
+    
         for url in urls:
-            print("dropped: ", url)
-            self.imagePathChanged(url.toString())
+            url = url.toLocalFile()
+            url = url.split("://", maxsplit=1)[-1] # remove the scheme (file://)
+            self.imagePathChanged(url)

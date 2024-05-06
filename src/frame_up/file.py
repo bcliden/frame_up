@@ -1,4 +1,3 @@
-from typing import Optional
 from pathlib import Path
 
 from PIL import Image as im
@@ -23,7 +22,9 @@ def get_suggested_filepath(directory: Path, filename: str) -> Path:
         name, ext = filename.rsplit(".", maxsplit=1)
         try:
             # is it in this program's format?
-            name, _, idx = name.rsplit("_", maxsplit=2)
+            name, middle, idx = name.rsplit("_", maxsplit=2)
+            if middle != "framed":
+                raise ValueError("middle portion is actually ", middle)
             idx = int(idx) + 1
         except ValueError as e:
             print(e)
