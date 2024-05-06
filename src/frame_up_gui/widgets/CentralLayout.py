@@ -1,8 +1,9 @@
+from pathlib import Path
 from typing import Optional
 from PySide6 import QtCore, QtWidgets, QtGui
 from PySide6.QtGui import QPalette
 
-from frame_up.file import save_to_disk
+from frame_up.file import save_to_disk, get_suggested_filepath
 from frame_up_gui.events import ImagePathChanged, ExportPathChanged, SaveCurrentImage
 from frame_up_gui.common import get_save_file_name, open_file_name
 from frame_up_gui.widgets import PreviewFrame
@@ -18,7 +19,7 @@ class CentralLayout(QtWidgets.QWidget):
         input_layout = QtWidgets.QHBoxLayout(input_group)
 
         input_widget = QtWidgets.QLineEdit("Hello from the input")
-        input_widget.setDisabled(True)
+        input_widget.setReadOnly(True)
 
         @QtCore.Slot(str)
         def input_edit(path: str):
@@ -51,8 +52,8 @@ class CentralLayout(QtWidgets.QWidget):
         export_group = QtWidgets.QGroupBox("Export your framed image")
         export_layout = QtWidgets.QHBoxLayout(export_group)
 
-        export_widget = QtWidgets.QLineEdit("Hello from export")
-        export_widget.setDisabled(True)
+        export_widget = QtWidgets.QLineEdit("<Suggested export path will appear here>")
+        export_widget.setReadOnly(True)
 
         @QtCore.Slot(str)
         def export_edit(path: str):
@@ -61,9 +62,15 @@ class CentralLayout(QtWidgets.QWidget):
         
         @QtCore.Slot(str)
         def export_change(path: str):
-            print("[exp ch]", path)
             export_widget.setText(path)
         ExportPathChanged.listen(export_change)
+
+        @QtCore.Slot(str)
+        def load_suggested(path: str):
+            parsed_path = Path(path)
+            suggested = get_suggested_filepath(parsed_path.parent, str(parsed_path.name))
+            export_widget.setText(str(suggested))
+        ImagePathChanged.listen(load_suggested)
 
         export_layout.addWidget(export_widget, 1)
 
@@ -77,18 +84,30 @@ class CentralLayout(QtWidgets.QWidget):
         # export_button.clicked.connect(export_pushed)
         # export_layout.addWidget(export_button, 0)
 
-
-        save_button = QtWidgets.QPushButton("Save as...")
+        save_button = QtWidgets.QPushButton("Save")
         @QtCore.Slot()
         def save_pushed():
+            # filename, filters = get_save_file_name()
+            print(f"saving to suggested path {export_widget.text()}")
+            # ExportPathChanged.change(name)
+            # trigger save w/ new file name
+            # save_to_disk(filename, )
+            SaveCurrentImage.broadcast(export_widget.text())
+            load_suggested(export_widget.text())
+        save_button.clicked.connect(save_pushed)
+
+        save_as_button = QtWidgets.QPushButton("Save as...")
+        @QtCore.Slot()
+        def save_as_pushed():
             filename, filters = get_save_file_name()
             print(f"ya want to save to {filename}")
             # ExportPathChanged.change(name)
             # trigger save w/ new file name
             # save_to_disk(filename, )
             SaveCurrentImage.broadcast(filename)
-        save_button.clicked.connect(save_pushed)
+        save_as_button.clicked.connect(save_as_pushed)
 
-        export_layout.addWidget(save_button, 0)
-    
+        export_layout.addWidget(save_button)
+        export_layout.addWidget(save_as_button)
+
         layout.addWidget(export_group, 0)
