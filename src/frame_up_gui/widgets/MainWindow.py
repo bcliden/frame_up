@@ -112,11 +112,10 @@ class MainWindow(QtWidgets.QMainWindow):
     Signals
     """
     def imagePathChanged(self, path):
-        ImagePathChanged.change(path)
+        ImagePathChanged.broadcast(path)
 
     def exportPathChanged(self, path):
-        ExportPathChanged.change(path)
-
+        ExportPathChanged.broadcast(path)
 
     """
     Slots

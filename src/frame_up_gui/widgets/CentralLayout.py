@@ -2,7 +2,8 @@ from typing import Optional
 from PySide6 import QtCore, QtWidgets, QtGui
 from PySide6.QtGui import QPalette
 
-from frame_up_gui.events import ImagePathChanged, ExportPathChanged
+from frame_up.file import save_to_disk
+from frame_up_gui.events import ImagePathChanged, ExportPathChanged, SaveCurrentImage
 from frame_up_gui.common import get_save_file_name, open_file_name
 from frame_up_gui.widgets import PreviewFrame
 
@@ -21,7 +22,7 @@ class CentralLayout(QtWidgets.QWidget):
 
         @QtCore.Slot(str)
         def input_edit(path: str):
-            ImagePathChanged.change(path)
+            ImagePathChanged.broadcast(path)
         input_widget.textChanged.connect(input_edit)
 
         @QtCore.Slot(str)
@@ -37,7 +38,7 @@ class CentralLayout(QtWidgets.QWidget):
         def input_pushed():
             name, filters = open_file_name()
             print(f"ya imported {name}")
-            ImagePathChanged.change(name)
+            ImagePathChanged.broadcast(name)
             # trigger load w/ image name
         input_button.clicked.connect(input_pushed)
 
@@ -55,7 +56,7 @@ class CentralLayout(QtWidgets.QWidget):
 
         @QtCore.Slot(str)
         def export_edit(path: str):
-            ExportPathChanged.change(path)
+            ExportPathChanged.broadcast(path)
         export_widget.textChanged.connect(export_edit)
         
         @QtCore.Slot(str)
@@ -77,13 +78,15 @@ class CentralLayout(QtWidgets.QWidget):
         # export_layout.addWidget(export_button, 0)
 
 
-        save_button = QtWidgets.QPushButton("Save")
+        save_button = QtWidgets.QPushButton("Save as...")
         @QtCore.Slot()
         def save_pushed():
-            name, filters = get_save_file_name()
-            print(f"ya want to save to {name}")
+            filename, filters = get_save_file_name()
+            print(f"ya want to save to {filename}")
             # ExportPathChanged.change(name)
             # trigger save w/ new file name
+            # save_to_disk(filename, )
+            SaveCurrentImage.broadcast(filename)
         save_button.clicked.connect(save_pushed)
 
         export_layout.addWidget(save_button, 0)
