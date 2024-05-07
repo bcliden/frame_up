@@ -37,6 +37,7 @@ class CentralLayout(QtWidgets.QWidget):
         input_layout.addWidget(input_widget)
 
         input_button = QtWidgets.QPushButton("Browse...")
+        input_button.setToolTip("Pick a local image to frame")
 
         @QtCore.Slot()
         def input_pushed():
@@ -52,7 +53,7 @@ class CentralLayout(QtWidgets.QWidget):
         preview = PreviewFrame(title="Preview Image Frame")
         layout.addWidget(preview, 1)
 
-        export_group = QtWidgets.QGroupBox("Export your framed image")
+        export_group = QtWidgets.QGroupBox("Save your framed image")
         export_layout = QtWidgets.QHBoxLayout(export_group)
 
         export_widget = QtWidgets.QLineEdit("<Suggested export path will appear here>")
@@ -74,6 +75,10 @@ class CentralLayout(QtWidgets.QWidget):
             suggested = get_suggested_filepath(parsed_path.parent, str(parsed_path.name))
             export_widget.setText(str(suggested))
         ImagePathChanged.listen(load_suggested)
+        SaveCurrentImage.listen(load_suggested)
+
+        # TODO: when the image is saved elsewhere, trigger a re-calc too
+
 
         export_layout.addWidget(export_widget, 1)
 
@@ -88,6 +93,7 @@ class CentralLayout(QtWidgets.QWidget):
         # export_layout.addWidget(export_button, 0)
 
         save_button = QtWidgets.QPushButton("Save")
+        save_button.setToolTip("Save to suggested file path")
         @QtCore.Slot()
         def save_pushed():
             # filename, filters = get_save_file_name()
@@ -100,9 +106,10 @@ class CentralLayout(QtWidgets.QWidget):
         save_button.clicked.connect(save_pushed)
 
         save_as_button = QtWidgets.QPushButton("Save as...")
+        save_as_button.setToolTip("Save to another location")
         @QtCore.Slot()
         def save_as_pushed():
-            filename, filters = get_save_file_name()
+            filename, filters = get_save_file_name(export_widget.text())
             print(f"ya want to save to {filename}")
             # ExportPathChanged.change(name)
             # trigger save w/ new file name

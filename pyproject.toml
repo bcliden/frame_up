@@ -9,19 +9,22 @@ authors = [{ name="Benjamin Liden", email="lidenb@oregonstate.edu" }]
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">3.10"
-dependencies = ["pillow"]
+dependencies = [
+    "pillow",
+    "PySide6" # could be an optional dep too...
+]
 
 [project.urls]
 Homepage = "https://github.com/bcliden/frame_up"
 Issues = "https://github.com/bcliden/frame_up/issues"
 
-[project.optional-dependencies]
-gui = ["PySide6"]                   # is installing like this too confusing?
+# [project.optional-dependencies]
+# gui = ["PySide6"]                   # is installing like this too confusing?
 
 
 [tool.setuptools.package-data]
 # mypkg = ["*.txt"]
-"frame-up.frames" = ["*.jpeg"]
+"frame_up.frames" = ["*.jpeg"]
 
 [project.scripts]
 # add one here?

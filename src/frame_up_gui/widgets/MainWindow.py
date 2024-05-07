@@ -1,14 +1,17 @@
+from pathlib import Path
 from typing import Any
 from PySide6 import QtCore, QtWidgets, QtGui
 from PySide6.QtGui import QPalette
 
-from frame_up.constants import home_dir, accepted_image_extensions
+from frame_up.constants import home_dir, accepted_image_extensions, version
+from frame_up.file import get_suggested_filepath
 from frame_up_gui.widgets import CentralLayout
-from frame_up_gui.events import ImagePathChanged, ExportPathChanged
+from frame_up_gui.events import ImagePathChanged, ExportPathChanged, SaveCurrentImage
 from frame_up_gui.common import open_file_name, get_save_file_name
 
+
 class MainWindow(QtWidgets.QMainWindow):
-    # imagePathChangeEvent: ImagePathChangedClass
+    sourcePath: str
 
     def __init__(self, *args, **kwargs):
         # pick off the center widget arg if exists
@@ -18,14 +21,16 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(*args, **kwargs)
 
         self.setWindowTitle("Frame-Up")
-        # manifest["main"] = self
 
-        # if center_widget is not None:
-        #     self.setCentralWidget(center_widget)
-        # else:
-        #     print("You forgot to pass a central widget to MainWindow")
+        self.sourcePath = ""
 
-        # enable draggo and droppo
+        @QtCore.Slot(str)
+        def updateSourcePath(path: str):
+            self.sourcePath = path
+
+        ImagePathChanged.listen(updateSourcePath)
+
+        # enable drag and drop
         self.setAcceptDrops(True)
         self.constructMenuBar()
 
@@ -111,6 +116,7 @@ class MainWindow(QtWidgets.QMainWindow):
     """
     Signals
     """
+
     def imagePathChanged(self, path: str):
         ImagePathChanged.broadcast(path)
 
@@ -129,35 +135,110 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(Any)
     def save_as(self):
-        fileName, filter = get_save_file_name()
-        print(f"User picked {fileName} with applied filter {filter}")
-        self.exportPathChanged(fileName)
+        parsed_input = Path(self.sourcePath)
+        suggested = get_suggested_filepath(parsed_input.parent, str(parsed_input.name))
+        print("we suggested ", suggested)
+        filename, filter = get_save_file_name(str(suggested))
+        print(f"User picked {filename} with applied filter {filter}")
+        SaveCurrentImage.broadcast(filename)
+        
+        # load_suggested(export_widget.text())
+        # how to do this from afar?
+
+
 
     @QtCore.Slot(Any)
     def quit(self):
         # app.quit()                    # needs a reference to the app
         # QtWidgets.QApplication.quit()   # also works?
-        self.close()                    # maybe the best... ?
+        self.close()  # maybe the best... ?
 
     @QtCore.Slot(Any)
     def about(self):
+        text = f"""About Frame-Up v{version}
+
+This application is made by Benjamin Liden <lidenb@oregonstate.edu>
+    for CS361: Software Engineering 1 at Oregon State University.
+
+The frame image is by user mrsiraphol on Freepik:
+https://www.freepik.com/free-photo/old-wooden-frame_976276.htm
+"""
         mb = QtWidgets.QMessageBox()
         mb.setWindowTitle("About")
-        mb.setText("Here are some fun facts about me... <also attributions>")
+        mb.setText(text)
         mb.exec()
 
     @QtCore.Slot(Any)
     def help(self):
+        text = f"""Frame-Up v{version} User Guide
+                   
+Hello and welcome to the exciting world of picture framing.
+With this application, you can load images from your computer
+and save them with a new frame around them.
+
+                   
+Step 1: 
+Select your source image
+------------------------
+                   
+The "Select an Image Source" section contains everything in this step:
+    1. A text box showing the currently selected image
+    2. A button labeled "Browse..." that opens the system file picker.
+                   
+Images can be picked from the system dialog using:
+    - the top menu at File > Open... 
+    - the Browse... button
+                   
+Once a path has been picked and loaded, you are ready for the next step.
+                   
+                   
+Step 2:
+Craft your image
+----------------
+                
+The "Preview Image Frame" shows the current state of the application.
+Your selected image from step 1 is visible in the pane here and it is 
+framed inside the application's picture frame.
+                   
+
+Step 3:
+Save your image
+---------------
+                   
+The "Save your image" section contains the following:
+1. A text field showing the suggested file path
+2. A "Save" button to immediately save to disk using the suggested path
+3. A "Save as..." button for specifying a custom location or filename.
+                   
+The suggested path will always be a unique one on your disk so your
+files won't be overwritten on accident.
+
+Use the "Save as..." button to open the system file dialog
+so you can save your image in a custom location with a custom name.
+"""
         mb = QtWidgets.QMessageBox()
         mb.setWindowTitle("Help")
-        mb.setText("Let's see if we can clear this up...")
+        mb.setText(text)
         mb.exec()
 
     @QtCore.Slot(Any)
     def whats_new(self):
+        text = f"""Welcome to v.{version} of Frame-Up...
+
+What's new in this version?
+
+{version}
+- Support for png and jpeg files
+- Open image from disk
+- Drag and drop images onto window
+- Default picture frame
+- Save/Save as... functionality
+- User Guide (see About > User Guide)
+- This change log :)
+"""
         mb = QtWidgets.QMessageBox()
         mb.setWindowTitle("What's New")
-        mb.setText("Welcome to v.XYZ of Frame-Up...")
+        mb.setText(text)
         mb.exec()
 
     """
@@ -202,8 +283,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # should only ever be a single image URL
         assert len(urls) == 1
-    
+
         for url in urls:
             url = url.toLocalFile()
-            url = url.split("://", maxsplit=1)[-1] # remove the scheme (file://)
+            url = url.split("://", maxsplit=1)[-1]  # remove the scheme (file://)
             self.imagePathChanged(url)

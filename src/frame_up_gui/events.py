@@ -35,3 +35,9 @@ class _SaveCurrentImage(QObject, SignalTower[str]):
     type = str
 
 SaveCurrentImage = _SaveCurrentImage()
+
+
+class _ImageWasSaved(QObject, SignalTower[str]):
+    type = str
+
+ImageWasSaved = _ImageWasSaved()
