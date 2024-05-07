@@ -39,9 +39,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show()
 
         # TODO/bcl: for testing purposes
-        self.imagePathChanged(
-            "C:/Users/bcliden/Pictures/Grain-Deer-Mushshroom-Environment.png"
-        )
+        # self.imagePathChanged(
+        #     "C:/Users/bcliden/Pictures/Grain-Deer-Mushshroom-Environment.png"
+        # )
 
     def constructMenuBar(self):
         toolbar = self.menuBar()
