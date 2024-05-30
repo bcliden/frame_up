@@ -7,7 +7,7 @@ from PIL.Image import Image
 
 def base64_encode_image(image: Image) -> str:
     bio = BytesIO()
-    image.save(bio)
+    image.save(bio, format="png")
     return b64encode(bio.getvalue()).decode("utf-8")
 
 

@@ -6,7 +6,11 @@ from frame_up.file import get_suggested_filepath
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QPalette
 
-from frame_up_gui.common import get_save_file_name, open_file_name
+from frame_up_gui.common import (
+    get_email_contact_info,
+    get_save_file_name,
+    open_file_name,
+)
 from frame_up_gui.events import (
     EmailCurrentImage,
     ExportPathChanged,
@@ -45,9 +49,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show()
 
         # TODO/bcl: for testing purposes
-        # self.imagePathChanged(
-        #     "C:/Users/bcliden/Pictures/Grain-Deer-Mushshroom-Environment.png"
-        # )
+        self.imagePathChanged(
+            "C:/Users/bcliden/Pictures/Grain-Deer-Mushshroom-Environment.png"
+        )
 
     def constructMenuBar(self):
         toolbar = self.menuBar()
@@ -158,8 +162,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(None)
     def email(self):
-        """TODO/bcl: do... something"""
-        EmailCurrentImage.broadcast("hi")
+        info = get_email_contact_info()
+        if not info:
+            raise SystemError("Couldn't get email contact info from dialog...")
+        EmailCurrentImage.broadcast(info)
 
     @QtCore.Slot(Any)
     def quit(self):

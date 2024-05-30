@@ -5,6 +5,8 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import QFileDialog
 
+from frame_up_gui.widgets.EmailDialog import EmailContactInfo, EmailDialog
+
 
 def open_file_name() -> tuple[str, str]:
     return QFileDialog.getOpenFileName(
@@ -32,6 +34,8 @@ def get_save_file_name(suggested: Optional[str] = None) -> tuple[str, str]:
     )
 
 
-def get_email_contents() -> tuple[str, str]:
+def get_email_contact_info() -> EmailContactInfo:
     """write custom email dialog? ugh"""
-    raise NotImplementedError("get_email_contents")
+    dialog = EmailDialog()
+    dialog.exec()  # doesn't matter if it succeeds...
+    return dialog.get_info()

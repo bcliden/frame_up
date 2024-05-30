@@ -1,13 +1,16 @@
-from typing import Optional
+from typing import Optional, Self
 
 from frame_up.file import open_from_disk, save_to_disk
 from frame_up.framing import frame_image
+from frame_up.models import ImageEmailPayload
+from frame_up.services import email_image
 from PIL.Image import Image
 from PIL.ImageQt import ImageQt
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QPalette
 
 from frame_up_gui.events import EmailCurrentImage, ImagePathChanged, SaveCurrentImage
+from frame_up_gui.widgets.EmailDialog import EmailContactInfo, EmailDialog
 
 
 class PreviewFrame(QtWidgets.QGroupBox):
@@ -92,7 +95,7 @@ class PreviewFrame(QtWidgets.QGroupBox):
         # return super().resizeEvent(event)
         self.resizeImage()
 
-    def resizeImage(self):
+    def resizeImage(self) -> None:
         if self.qt_pixmap is None:
             print("no pixmap to resize. exiting")
             return
@@ -107,7 +110,7 @@ class PreviewFrame(QtWidgets.QGroupBox):
         self.image_canvas.setPixmap(self.scaled_pixmap)
 
     @QtCore.Slot(str)
-    def load_file(self, path: str):
+    def load_file(self, path: str) -> None:
         self.reset()
 
         self.original_image = open_from_disk(path)
@@ -121,13 +124,19 @@ class PreviewFrame(QtWidgets.QGroupBox):
         self.setMinimums(height=self.scaled_pixmap.height())
 
     @QtCore.Slot(str)
-    def save_image(self, filename):
+    def save_image(self, filename) -> None:
         save_to_disk(filename, self.qt_image)
 
-    @QtCore.Slot(None)
-    def email_image(self):
-        """TODO/bcl: trigger service call... with info from where?"""
-        raise NotImplementedError("email_image in preview frame")
+    @QtCore.Slot(EmailContactInfo)
+    def email_image(self: Self, info: EmailContactInfo) -> None:
+        """Get contact info from user and send email payload to service"""
+
+        image = self.framed_image  # TODO/bcl: get the REAL image? hmmm
+        if not image:
+            return
+
+        payload = ImageEmailPayload(to=info.to, subject_line=info.subject, data=image)
+        email_image(payload)
 
     def setMinimums(self, height: Optional[int]):
         if height is None:

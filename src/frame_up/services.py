@@ -13,6 +13,7 @@ service_index = {
     "vibrant": {"host": "localhost", "port": "8674"},
     "monochrome": {"host": "localhost", "port": "8675"},
 }
+timeout = 5  # seconds
 
 
 def antique_filter(image: Image, intensity: Optional[float] = None) -> Image:
@@ -32,6 +33,9 @@ def send_recv_zmq(host: str, port: str, payload: str) -> Any:
 
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
+    socket.setsockopt(zmq.CONNECT_TIMEOUT, timeout * 1000)
+    socket.setsockopt(zmq.SNDTIMEO, timeout * 1000)
+    socket.setsockopt(zmq.RCVTIMEO, timeout * 1000)
     socket.connect(connection)
 
     socket.send_string(payload)
@@ -39,7 +43,8 @@ def send_recv_zmq(host: str, port: str, payload: str) -> Any:
 
 
 def get_filtered_image(filter: str, image: Image, intensity: float = 1) -> Image:
-    host, port = service_index[filter]
+    host = service_index[filter]["host"]
+    port = service_index[filter]["port"]
 
     if host is None or port is None:
         raise ValueError("couldn't find configuration for filter: ", filter)
@@ -54,7 +59,8 @@ def get_filtered_image(filter: str, image: Image, intensity: float = 1) -> Image
 
 def email_image(payload: ImageEmailPayload) -> bool:
     """contact email service w/ contract info"""
-    host, port = service_index["email"]
+    host = service_index["email"]["host"]
+    port = service_index["email"]["port"]
 
     response = send_recv_zmq(host, port, payload.to_microservice_json())
 

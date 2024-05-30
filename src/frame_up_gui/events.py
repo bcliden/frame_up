@@ -1,7 +1,8 @@
-from abc import abstractmethod
-from typing import Any, Generic, Protocol, Type, TypeVar
+from typing import Generic, Type, TypeVar
 
 from PySide6.QtCore import QObject, Signal, SignalInstance
+
+from frame_up_gui.widgets.EmailDialog import EmailContactInfo
 
 T = TypeVar("T")
 
@@ -43,8 +44,8 @@ class _SaveCurrentImage(QObject, SignalTower[str]):
 SaveCurrentImage = _SaveCurrentImage()
 
 
-class _EmailCurrentImage(QObject, SignalTower[str]):
-    type = str
+class _EmailCurrentImage(QObject, SignalTower[EmailContactInfo]):
+    type = EmailContactInfo
 
 
 EmailCurrentImage = _EmailCurrentImage()
