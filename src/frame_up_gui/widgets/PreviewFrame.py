@@ -1,4 +1,4 @@
-from typing import Optional, Self
+from typing import Any, Optional, Self
 
 from frame_up.file import open_from_disk, save_to_disk
 from frame_up.framing import frame_image
@@ -10,7 +10,8 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QPalette
 
 from frame_up_gui.events import EmailCurrentImage, ImagePathChanged, SaveCurrentImage
-from frame_up_gui.widgets.EmailDialog import EmailContactInfo, EmailDialog
+from frame_up_gui.tasks import OffThread
+from frame_up_gui.widgets.EmailDialog import EmailContactInfo
 
 
 class PreviewFrame(QtWidgets.QGroupBox):
@@ -24,6 +25,8 @@ class PreviewFrame(QtWidgets.QGroupBox):
     image_canvas: QtWidgets.QLabel
     image_min_height: int
 
+    thread_pool: QtCore.QThreadPool
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -35,6 +38,8 @@ class PreviewFrame(QtWidgets.QGroupBox):
         self.scaled_pixmap = None
 
         self.image_min_height = 300
+
+        self.thread_pool = QtCore.QThreadPool()
 
         # event connections
         ImagePathChanged.listen(self.load_file)
@@ -131,12 +136,13 @@ class PreviewFrame(QtWidgets.QGroupBox):
     def email_image(self: Self, info: EmailContactInfo) -> None:
         """Get contact info from user and send email payload to service"""
 
-        image = self.framed_image  # TODO/bcl: get the REAL image? hmmm
+        image = self.framed_image
         if not image:
             return
 
         payload = ImageEmailPayload(to=info.to, subject_line=info.subject, data=image)
-        email_image(payload)
+        runnable = OffThread(email_image, payload)
+        self.thread_pool.start(runnable)
 
     def setMinimums(self, height: Optional[int]):
         if height is None:
