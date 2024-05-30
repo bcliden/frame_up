@@ -12,8 +12,10 @@ def save_to_disk(path: str, image: Image, *, format=None):
     print(f"Saving an image to {path} with format {format}")
     image.save(path, format=format)
 
+
 def open_from_disk(path: str) -> Image:
     return im.open(path)
+
 
 def get_suggested_filepath(directory: Path, filename: str) -> Path:
     path = directory / filename

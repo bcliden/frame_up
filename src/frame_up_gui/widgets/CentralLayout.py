@@ -1,12 +1,14 @@
 from pathlib import Path
 from typing import Optional
-from PySide6 import QtCore, QtWidgets, QtGui
+
+from frame_up.file import get_suggested_filepath, save_to_disk
+from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QPalette
 
-from frame_up.file import save_to_disk, get_suggested_filepath
-from frame_up_gui.events import ImagePathChanged, ExportPathChanged, SaveCurrentImage
 from frame_up_gui.common import get_save_file_name, open_file_name
+from frame_up_gui.events import ExportPathChanged, ImagePathChanged, SaveCurrentImage
 from frame_up_gui.widgets import PreviewFrame
+
 
 class CentralLayout(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
@@ -24,6 +26,7 @@ class CentralLayout(QtWidgets.QWidget):
         @QtCore.Slot(str)
         def input_edit(path: str):
             ImagePathChanged.broadcast(path)
+
         input_widget.textChanged.connect(input_edit)
 
         @QtCore.Slot(str)
@@ -31,7 +34,7 @@ class CentralLayout(QtWidgets.QWidget):
             if path is not None and len(path) > 0:
                 print("setting input to ", path)
                 input_widget.setText(path)
-            
+
         ImagePathChanged.listen(input_change)
 
         input_layout.addWidget(input_widget)
@@ -45,6 +48,7 @@ class CentralLayout(QtWidgets.QWidget):
             print(f"ya imported {name}")
             ImagePathChanged.broadcast(name)
             # trigger load w/ image name
+
         input_button.clicked.connect(input_pushed)
 
         input_layout.addWidget(input_button, 0)
@@ -62,23 +66,27 @@ class CentralLayout(QtWidgets.QWidget):
         @QtCore.Slot(str)
         def export_edit(path: str):
             ExportPathChanged.broadcast(path)
+
         export_widget.textChanged.connect(export_edit)
-        
+
         @QtCore.Slot(str)
         def export_change(path: str):
             export_widget.setText(path)
+
         ExportPathChanged.listen(export_change)
 
         @QtCore.Slot(str)
         def load_suggested(path: str):
             parsed_path = Path(path)
-            suggested = get_suggested_filepath(parsed_path.parent, str(parsed_path.name))
+            suggested = get_suggested_filepath(
+                parsed_path.parent, str(parsed_path.name)
+            )
             export_widget.setText(str(suggested))
+
         ImagePathChanged.listen(load_suggested)
         SaveCurrentImage.listen(load_suggested)
 
         # TODO: when the image is saved elsewhere, trigger a re-calc too
-
 
         export_layout.addWidget(export_widget, 1)
 
@@ -94,6 +102,7 @@ class CentralLayout(QtWidgets.QWidget):
 
         save_button = QtWidgets.QPushButton("Save")
         save_button.setToolTip("Save to suggested file path")
+
         @QtCore.Slot()
         def save_pushed():
             # filename, filters = get_save_file_name()
@@ -103,10 +112,12 @@ class CentralLayout(QtWidgets.QWidget):
             # save_to_disk(filename, )
             SaveCurrentImage.broadcast(export_widget.text())
             load_suggested(export_widget.text())
+
         save_button.clicked.connect(save_pushed)
 
         save_as_button = QtWidgets.QPushButton("Save as...")
         save_as_button.setToolTip("Save to another location")
+
         @QtCore.Slot()
         def save_as_pushed():
             filename, filters = get_save_file_name(export_widget.text())
@@ -115,6 +126,7 @@ class CentralLayout(QtWidgets.QWidget):
             # trigger save w/ new file name
             # save_to_disk(filename, )
             SaveCurrentImage.broadcast(filename)
+
         save_as_button.clicked.connect(save_as_pushed)
 
         export_layout.addWidget(save_button)

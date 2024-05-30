@@ -1,11 +1,12 @@
 from typing import Optional
-from PySide6 import QtCore, QtWidgets, QtGui
-from PySide6.QtGui import QPalette
-from PIL.Image import Image
-from PIL.ImageQt import ImageQt
 
 from frame_up.file import open_from_disk, save_to_disk
 from frame_up.framing import frame_image
+from PIL.Image import Image
+from PIL.ImageQt import ImageQt
+from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6.QtGui import QPalette
+
 from frame_up_gui.events import ImagePathChanged, SaveCurrentImage
 
 
@@ -107,10 +108,10 @@ class PreviewFrame(QtWidgets.QGroupBox):
     @QtCore.Slot(str)
     def load_file(self, path: str):
         self.reset()
-        
+
         self.original_image = open_from_disk(path)
         self.framed_image = frame_image(self.original_image)
-        
+
         self.qt_image = ImageQt(self.framed_image)
         self.qt_pixmap = QtGui.QPixmap.fromImage(self.qt_image)
         # self.shown_pixmap =  # will be populated in resizeImage below

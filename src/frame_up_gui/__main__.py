@@ -1,4 +1,5 @@
 import sys
+
 from frame_up_gui.App import FrameUpApp
 from frame_up_gui.widgets.MainWindow import MainWindow
 

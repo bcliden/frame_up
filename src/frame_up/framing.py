@@ -12,7 +12,7 @@ add this attribution:
 """
 
 frames: dict[str, Image] = {}
-for file in files('frame_up.data').iterdir():
+for file in files("frame_up.data").iterdir():
     if file.is_file():
         print("Opening ", file.name)
         img_bytes = file.open("rb")
@@ -20,6 +20,7 @@ for file in files('frame_up.data').iterdir():
         frames[file.name] = image
     else:
         print("what is this?: ", file.name)
+
 
 def frame_image(img: Image) -> Image:
     print(frames)
@@ -44,4 +45,3 @@ def frame_image(img: Image) -> Image:
     frame.paste(resized, box=(up, left))
 
     return frame
-    

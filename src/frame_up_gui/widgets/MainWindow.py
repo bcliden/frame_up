@@ -1,13 +1,14 @@
 from pathlib import Path
 from typing import Any
-from PySide6 import QtCore, QtWidgets, QtGui
+
+from frame_up.constants import accepted_image_extensions, version
+from frame_up.file import get_suggested_filepath
+from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QPalette
 
-from frame_up.constants import home_dir, accepted_image_extensions, version
-from frame_up.file import get_suggested_filepath
+from frame_up_gui.common import get_save_file_name, open_file_name
+from frame_up_gui.events import ExportPathChanged, ImagePathChanged, SaveCurrentImage
 from frame_up_gui.widgets import CentralLayout
-from frame_up_gui.events import ImagePathChanged, ExportPathChanged, SaveCurrentImage
-from frame_up_gui.common import open_file_name, get_save_file_name
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -141,11 +142,9 @@ class MainWindow(QtWidgets.QMainWindow):
         filename, filter = get_save_file_name(str(suggested))
         print(f"User picked {filename} with applied filter {filter}")
         SaveCurrentImage.broadcast(filename)
-        
+
         # load_suggested(export_widget.text())
         # how to do this from afar?
-
-
 
     @QtCore.Slot(Any)
     def quit(self):

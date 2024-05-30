@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "frame-up"
-version = "0.0.1-beta"              # or dynamic from git?
-authors = [{ name="Benjamin Liden", email="lidenb@oregonstate.edu" }]
+version = "0.0.1-beta" # or dynamic from git?
+authors = [{ name = "Benjamin Liden", email = "lidenb@oregonstate.edu" }]
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">3.10"
 dependencies = [
     "pillow",
-    "PySide6" # could be an optional dep too...
+    "PySide6", # could be an optional dep too...
 ]
 
 [project.urls]
@@ -31,3 +31,6 @@ Issues = "https://github.com/bcliden/frame_up/issues"
 
 [project.gui-scripts]
 # maybe just here
+
+[tool.ruff.lint]
+unfixable = ["F401"] # don't remove unused imports... yet
