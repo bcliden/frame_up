@@ -7,7 +7,7 @@ from PIL.ImageQt import ImageQt
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QPalette
 
-from frame_up_gui.events import ImagePathChanged, SaveCurrentImage
+from frame_up_gui.events import EmailCurrentImage, ImagePathChanged, SaveCurrentImage
 
 
 class PreviewFrame(QtWidgets.QGroupBox):
@@ -36,6 +36,7 @@ class PreviewFrame(QtWidgets.QGroupBox):
         # event connections
         ImagePathChanged.listen(self.load_file)
         SaveCurrentImage.listen(self.save_image)
+        EmailCurrentImage.listen(self.email_image)
 
         self.setMinimums(self.image_min_height)
 
@@ -122,6 +123,11 @@ class PreviewFrame(QtWidgets.QGroupBox):
     @QtCore.Slot(str)
     def save_image(self, filename):
         save_to_disk(filename, self.qt_image)
+
+    @QtCore.Slot(None)
+    def email_image(self):
+        """TODO/bcl: trigger service call... with info from where?"""
+        raise NotImplementedError("email_image in preview frame")
 
     def setMinimums(self, height: Optional[int]):
         if height is None:

@@ -30,3 +30,8 @@ def get_save_file_name(suggested: Optional[str] = None) -> tuple[str, str]:
         filter="Images (*.png *.jpg *.jpeg)",
         selectedFilter="Images (*.png *.jpg *.jpeg)",
     )
+
+
+def get_email_contents() -> tuple[str, str]:
+    """write custom email dialog? ugh"""
+    raise NotImplementedError("get_email_contents")

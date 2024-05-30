@@ -7,7 +7,12 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QPalette
 
 from frame_up_gui.common import get_save_file_name, open_file_name
-from frame_up_gui.events import ExportPathChanged, ImagePathChanged, SaveCurrentImage
+from frame_up_gui.events import (
+    EmailCurrentImage,
+    ExportPathChanged,
+    ImagePathChanged,
+    SaveCurrentImage,
+)
 from frame_up_gui.widgets import CentralLayout
 
 
@@ -67,6 +72,14 @@ class MainWindow(QtWidgets.QMainWindow):
         save_action.setShortcut("Ctrl+S")
         fileMenu.addAction(save_action)
 
+        fileMenu.addSeparator()
+        email_action = QtGui.QAction(text="&Email...", parent=self)
+        # email_action.setIcon(QtGui.QIcon("bug.png"))
+        email_action.setToolTip("Email the current image file")
+        email_action.setStatusTip("Email the current image file")
+        email_action.triggered.connect(self.email)
+        # email_action.setShortcut("Ctrl+E")
+        fileMenu.addAction(email_action)
         fileMenu.addSeparator()
 
         quit_action = QtGui.QAction(text="Quit", parent=self)
@@ -128,13 +141,13 @@ class MainWindow(QtWidgets.QMainWindow):
     Slots
     """
 
-    @QtCore.Slot(Any)
+    @QtCore.Slot(None)
     def open(self):
         name, filter = open_file_name()
         print(f"User picked {name} with applied filter {filter}")
         self.imagePathChanged(name)
 
-    @QtCore.Slot(Any)
+    @QtCore.Slot(None)
     def save_as(self):
         parsed_input = Path(self.sourcePath)
         suggested = get_suggested_filepath(parsed_input.parent, str(parsed_input.name))
@@ -143,14 +156,14 @@ class MainWindow(QtWidgets.QMainWindow):
         print(f"User picked {filename} with applied filter {filter}")
         SaveCurrentImage.broadcast(filename)
 
-        # load_suggested(export_widget.text())
-        # how to do this from afar?
+    @QtCore.Slot(None)
+    def email(self):
+        """TODO/bcl: do... something"""
+        EmailCurrentImage.broadcast("hi")
 
     @QtCore.Slot(Any)
     def quit(self):
-        # app.quit()                    # needs a reference to the app
-        # QtWidgets.QApplication.quit()   # also works?
-        self.close()  # maybe the best... ?
+        self.close()
 
     @QtCore.Slot(Any)
     def about(self):

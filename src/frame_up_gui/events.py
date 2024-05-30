@@ -43,6 +43,13 @@ class _SaveCurrentImage(QObject, SignalTower[str]):
 SaveCurrentImage = _SaveCurrentImage()
 
 
+class _EmailCurrentImage(QObject, SignalTower[str]):
+    type = str
+
+
+EmailCurrentImage = _EmailCurrentImage()
+
+
 class _ImageWasSaved(QObject, SignalTower[str]):
     type = str
 
