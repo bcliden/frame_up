@@ -6,6 +6,7 @@ from frame_up.file import get_suggested_filepath
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QPalette
 
+from frame_up_gui.App import FrameUpApp
 from frame_up_gui.common import (
     get_email_contact_info,
     get_save_file_name,
@@ -169,7 +170,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot(Any)
     def quit(self):
-        self.close()
+        FrameUpApp.quit()
 
     @QtCore.Slot(Any)
     def about(self):
@@ -306,3 +307,7 @@ What's new in this version?
             url = url.toLocalFile()
             url = url.split("://", maxsplit=1)[-1]  # remove the scheme (file://)
             self.imagePathChanged(url)
+
+    def closeEvent(self, *args, **kwargs):
+        super().closeEvent(*args, **kwargs)
+        FrameUpApp.quit()

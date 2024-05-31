@@ -6,6 +6,10 @@ from frame_up_gui.widgets.EmailDialog import EmailContactInfo
 
 T = TypeVar("T")
 
+"""
+can all of these with similar type signatures be combined?
+"""
+
 
 class SignalTower(Generic[T]):
     name: str

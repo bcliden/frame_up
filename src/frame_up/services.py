@@ -8,7 +8,7 @@ from frame_up.serialization import base64_decode_image, base64_encode_image
 
 # source from .env or something configurable?
 service_index = {
-    "email": {"host": "localhost", "port": "7777"},
+    "email": {"host": "localhost", "port": "5555"},
     "antique": {"host": "localhost", "port": "8673"},
     "vibrant": {"host": "localhost", "port": "8674"},
     "monochrome": {"host": "localhost", "port": "8675"},
@@ -64,6 +64,6 @@ def email_image(payload: ImageEmailPayload) -> bool:
 
     response = send_recv_zmq(host, port, payload.to_microservice_json())
 
-    if not response.success:
+    if not response["success"]:
         raise SystemError("send_email failed")
-    return response.success
+    return response["success"]

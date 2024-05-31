@@ -9,6 +9,7 @@ from PIL.ImageQt import ImageQt
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QPalette
 
+from frame_up_gui.App import FrameUpApp
 from frame_up_gui.events import EmailCurrentImage, ImagePathChanged, SaveCurrentImage
 from frame_up_gui.tasks import OffThread
 from frame_up_gui.widgets.EmailDialog import EmailContactInfo
@@ -25,8 +26,6 @@ class PreviewFrame(QtWidgets.QGroupBox):
     image_canvas: QtWidgets.QLabel
     image_min_height: int
 
-    thread_pool: QtCore.QThreadPool
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -39,7 +38,8 @@ class PreviewFrame(QtWidgets.QGroupBox):
 
         self.image_min_height = 300
 
-        self.thread_pool = QtCore.QThreadPool()
+        # self.thread_pool = QThreadPool()
+        # self.thread_pool.setExpiryTimeout(1 * 1000)  # one human second
 
         # event connections
         ImagePathChanged.listen(self.load_file)
@@ -141,8 +141,25 @@ class PreviewFrame(QtWidgets.QGroupBox):
             return
 
         payload = ImageEmailPayload(to=info.to, subject_line=info.subject, data=image)
-        runnable = OffThread(email_image, payload)
-        self.thread_pool.start(runnable)
+        worker = OffThread(email_image, payload)
+
+        """
+        This can all be refactored using QThread builtins
+        """
+
+        @QtCore.Slot(Any)
+        def success(*args, **kwargs):
+            print(f"[thread] SUCCESS came back with: {args} and {kwargs}")
+            worker.deleteLater()
+
+        @QtCore.Slot(Any)
+        def error(*args, **kwargs):
+            print(f"[thread] ERROR came back with: {args} and {kwargs}")
+            worker.deleteLater()
+
+        worker.signals.success.connect(success)
+        worker.signals.failure.connect(error)
+        worker.start()
 
     def setMinimums(self, height: Optional[int]):
         if height is None:
