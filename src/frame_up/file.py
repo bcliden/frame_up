@@ -20,18 +20,18 @@ def open_from_disk(path: str) -> Image:
 def get_suggested_filepath(directory: Path, filename: str) -> Path:
     path = directory / filename
 
-    if path.exists():
+    if path.exists() and path.is_file():
         name, ext = filename.rsplit(".", maxsplit=1)
         try:
             # is it in this program's format?
             name, middle, idx = name.rsplit("_", maxsplit=2)
             if middle != "framed":
                 raise ValueError("middle portion is actually ", middle)
-            idx = int(idx) + 1
+            idx = str(int(idx) + 1)
         except ValueError as e:
             print(e)
             # may not have been in initial format
-            idx = 0
+            idx = "0"
         return get_suggested_filepath(directory, f"{name}_framed_{idx}.{ext}")
 
     return path

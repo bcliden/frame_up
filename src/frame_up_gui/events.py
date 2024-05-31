@@ -18,10 +18,10 @@ class SignalTower(Generic[T]):
 
     def __init_subclass__(cls, *args, **kwargs) -> None:
         super().__init_subclass__(*args, **kwargs)
-        cls._evt = Signal(cls.type, name=cls.__name__)
+        cls._evt = Signal(cls.type, name=cls.__name__)  # type: ignore
 
-    def listen(self, fn) -> SignalInstance:
-        return self._evt.connect(fn)
+    def listen(self, fn) -> None:
+        self._evt.connect(fn)
 
     def broadcast(self, message: T):
         self._evt.emit(message)

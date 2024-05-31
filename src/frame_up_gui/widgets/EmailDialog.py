@@ -74,7 +74,7 @@ class EmailDialog(QtWidgets.QDialog):
     def set_subject(self, subject: str):
         self.subject = subject
 
-    @QtCore.Slot(None)
+    @QtCore.Slot()
     def accept(self) -> None:
         to = self.to
         subject = self.subject
@@ -84,7 +84,7 @@ class EmailDialog(QtWidgets.QDialog):
             self.info = EmailContactInfo(to, subject)
             return super(EmailDialog, self).accept()
 
-    @QtCore.Slot(None)
+    @QtCore.Slot()
     def reject(self):
         self.info = None
         return super(EmailDialog, self).reject()

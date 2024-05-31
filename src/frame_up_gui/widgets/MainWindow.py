@@ -146,13 +146,13 @@ class MainWindow(QtWidgets.QMainWindow):
     Slots
     """
 
-    @QtCore.Slot(None)
+    @QtCore.Slot()
     def open(self):
         name, filter = open_file_name()
         print(f"User picked {name} with applied filter {filter}")
         self.imagePathChanged(name)
 
-    @QtCore.Slot(None)
+    @QtCore.Slot()
     def save_as(self):
         parsed_input = Path(self.sourcePath)
         suggested = get_suggested_filepath(parsed_input.parent, str(parsed_input.name))
@@ -161,18 +161,18 @@ class MainWindow(QtWidgets.QMainWindow):
         print(f"User picked {filename} with applied filter {filter}")
         SaveCurrentImage.broadcast(filename)
 
-    @QtCore.Slot(None)
+    @QtCore.Slot()
     def email(self):
         info = get_email_contact_info()
         if not info:
             raise SystemError("Couldn't get email contact info from dialog...")
         EmailCurrentImage.broadcast(info)
 
-    @QtCore.Slot(Any)
+    @QtCore.Slot()
     def quit(self):
         FrameUpApp.quit()
 
-    @QtCore.Slot(Any)
+    @QtCore.Slot()
     def about(self):
         text = f"""About Frame-Up v{version}
 
@@ -187,7 +187,7 @@ https://www.freepik.com/free-photo/old-wooden-frame_976276.htm
         mb.setText(text)
         mb.exec()
 
-    @QtCore.Slot(Any)
+    @QtCore.Slot()
     def help(self):
         text = f"""Frame-Up v{version} User Guide
                    
@@ -240,7 +240,7 @@ so you can save your image in a custom location with a custom name.
         mb.setText(text)
         mb.exec()
 
-    @QtCore.Slot(Any)
+    @QtCore.Slot()
     def whats_new(self):
         text = f"""Welcome to v.{version} of Frame-Up...
 
@@ -304,9 +304,11 @@ What's new in this version?
         assert len(urls) == 1
 
         for url in urls:
-            url = url.toLocalFile()
-            url = url.split("://", maxsplit=1)[-1]  # remove the scheme (file://)
-            self.imagePathChanged(url)
+            url_local = url.toLocalFile()
+            url_no_scheme = url_local.split("://", maxsplit=1)[
+                -1
+            ]  # remove the scheme (file://)
+            self.imagePathChanged(url_no_scheme)
 
     def closeEvent(self, *args, **kwargs):
         super().closeEvent(*args, **kwargs)

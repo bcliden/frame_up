@@ -1,3 +1,7 @@
 {
-    "mypy.enabled": true
+    "mypy.enabled": true,
+    "mypy.dmypyExecutable": "${workspaceFolder}/.venv/bin/dmypy",
+    // "mypy.configFile": "pyproject.toml",
+    "mypy.runUsingActiveInterpreter": true,
+    "mypy.debugLogging": true
 }

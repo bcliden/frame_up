@@ -1,38 +1,98 @@
-from typing import Any, Self
+from typing import Any, Callable, Optional
 
-from PySide6.QtCore import QObject, QThread, Signal, SignalInstance, Slot
-
-"""
-We don't really need all of these signals, I think?
-can probably use the builtin thread signals
-"""
+from PySide6.QtCore import (
+    QObject,
+    QRunnable,
+    QThreadPool,
+    Signal,
+    Slot,
+)
 
 
 class Signals(QObject):
-    success = Signal(Any)
-    failure = Signal(str)
+    result = Signal(object)
+    done = Signal()
 
 
-class OffThread(QThread):
+class Task(QRunnable):
     """
     Any action, run this inside a thread pool with pool.start()
     """
 
-    def __init__(self, fn, *args, **kwargs) -> Self:
+    fn: Callable
+    args: Any
+    kwargs: Any
+    signals: Signals
+
+    def __init__(self, fn: Callable, *args, **kwargs) -> None:
         super().__init__()
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
         self.signals = Signals()
+        self.setAutoDelete(True)
 
-    def run(self: Self) -> None:
-        print("OffThread task is starting: ", self)
+    @Slot()
+    def run(self) -> None:
+        result = None
         try:
             result = self.fn(*self.args, **self.kwargs)
-            print("OffThread result is = ", result)
-            self.signals.success.emit(result)
         except Exception as e:
-            print("OffThread failed with exc = ", str(e))
-            self.signals.failure.emit(str(e))
-        print("OffThread task is done.")
-        self.deleteLater()
+            print(e)  # nothing?
+        self.signals.result.emit(result)
+        self.signals.done.emit()
+
+
+class BackgroundTasker:
+    """
+    Class mixin to do some work off the GUI thread
+
+    don't forget to call `clean_background_tasks` when done!
+    """
+
+    pool = QThreadPool.globalInstance()
+
+    def send_task(
+        self,
+        fn: Callable,
+        *args,
+        result_cb: Optional[Callable],
+        finished_cb: Optional[Callable],
+        **kwargs,
+    ) -> None:
+        print(f"creating task with fn={fn} args={args} kwargs={kwargs}")
+        task = Task(fn, *args, **kwargs)
+        worker_id = id(task)
+
+        # Connect callbacks if specified
+        if result_cb is not None:
+            task.signals.result.connect(result_cb)
+        if finished_cb is not None:
+            task.signals.result.connect(finished_cb)
+
+        # Debug callbacks
+        task.signals.result.connect(
+            lambda *a, **kw: self.log(f"[{worker_id} result]", *a, **kw)
+        )
+        task.signals.done.connect(
+            lambda *a, **kw: self.log(f"[{worker_id} done]", *a, **kw)
+        )
+
+        self.pool.start(task)
+        print(f"sent worker (id={worker_id}) to pool")
+
+        # TODO/bcl can we even start and then hook up a signal?
+        # return runnable
+
+    def log(self, prefix, *args, **kwargs) -> None:
+        print(prefix, args, kwargs)
+
+    @Slot()
+    def clean_background_tasks(self):
+        print(f"waiting for {self.pool.activeThreadCount()} b.g. tasks to finish?")
+        # success = self.pool.waitForDone(200)
+        success = self.pool.waitForDone(-1)
+        if success:
+            print("thread pool closed cleanly")
+        else:
+            print("thread pool closed messily :(")

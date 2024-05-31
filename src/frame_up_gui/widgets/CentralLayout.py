@@ -55,6 +55,9 @@ class CentralLayout(QtWidgets.QWidget):
         @QtCore.Slot()
         def input_pushed():
             name, filters = open_file_name()
+            if len(name) == 0:
+                # empty string
+                return
             print(f"ya imported {name}")
             ImagePathChanged.broadcast(name)
             # trigger load w/ image name

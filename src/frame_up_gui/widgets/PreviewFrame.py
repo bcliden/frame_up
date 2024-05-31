@@ -1,4 +1,4 @@
-from typing import Any, Optional, Self
+from typing import Optional, Self
 
 from frame_up.file import open_from_disk, save_to_disk
 from frame_up.framing import frame_image
@@ -11,18 +11,21 @@ from PySide6.QtGui import QPalette
 
 from frame_up_gui.App import FrameUpApp
 from frame_up_gui.events import EmailCurrentImage, ImagePathChanged, SaveCurrentImage
-from frame_up_gui.tasks import OffThread
+from frame_up_gui.tasks import BackgroundTasker
 from frame_up_gui.widgets.EmailDialog import EmailContactInfo
 
 
-class PreviewFrame(QtWidgets.QGroupBox):
+class PreviewFrame(QtWidgets.QGroupBox, BackgroundTasker):
+    # Pillow Types
     original_image: Image | None
     framed_image: Image | None
 
+    # QT Types
     qt_image: ImageQt | None
     qt_pixmap: QtGui.QPixmap | None
     scaled_pixmap: QtGui.QPixmap | None
 
+    # Canvas management
     image_canvas: QtWidgets.QLabel
     image_min_height: int
 
@@ -38,13 +41,11 @@ class PreviewFrame(QtWidgets.QGroupBox):
 
         self.image_min_height = 300
 
-        # self.thread_pool = QThreadPool()
-        # self.thread_pool.setExpiryTimeout(1 * 1000)  # one human second
-
         # event connections
         ImagePathChanged.listen(self.load_file)
         SaveCurrentImage.listen(self.save_image)
         EmailCurrentImage.listen(self.email_image)
+        FrameUpApp.instance().aboutToQuit.connect(self.clean_background_tasks)
 
         self.setMinimums(self.image_min_height)
 
@@ -70,7 +71,8 @@ class PreviewFrame(QtWidgets.QGroupBox):
         # override of: https://doc.qt.io/qt-6/qwidget.html#sizeHint-prop
         hint = super().sizeHint()
         # print(f"[pf.sizeHint original] = {hint}")
-        hint.setHeight(self.aspectRatio() * hint.height())
+        new_height = int(self.aspectRatio() * hint.height())
+        hint.setHeight(new_height)
         # print(f"pf.sizeHint -> {hint}")
         return hint
 
@@ -105,10 +107,10 @@ class PreviewFrame(QtWidgets.QGroupBox):
             print("no pixmap to resize. exiting")
             return
 
-        _, _, width, height = self.image_canvas.geometry().getRect()
+        geometry = self.image_canvas.geometry()
         self.scaled_pixmap = self.qt_pixmap.scaled(
-            width,
-            height,
+            geometry.width(),
+            geometry.height(),
             QtCore.Qt.AspectRatioMode.KeepAspectRatio,
             QtCore.Qt.TransformationMode.SmoothTransformation,
         )
@@ -116,6 +118,9 @@ class PreviewFrame(QtWidgets.QGroupBox):
 
     @QtCore.Slot(str)
     def load_file(self, path: str) -> None:
+        # if self.scaled_pixmap is None:
+        #     return
+
         self.reset()
 
         self.original_image = open_from_disk(path)
@@ -123,13 +128,15 @@ class PreviewFrame(QtWidgets.QGroupBox):
 
         self.qt_image = ImageQt(self.framed_image)
         self.qt_pixmap = QtGui.QPixmap.fromImage(self.qt_image)
-        # self.shown_pixmap =  # will be populated in resizeImage below
+        self.scaled_pixmap = self.qt_pixmap  # will be resized below
 
         self.resizeImage()
         self.setMinimums(height=self.scaled_pixmap.height())
 
     @QtCore.Slot(str)
     def save_image(self, filename) -> None:
+        if self.qt_image is None:
+            return
         save_to_disk(filename, self.qt_image)
 
     @QtCore.Slot(EmailContactInfo)
@@ -141,25 +148,12 @@ class PreviewFrame(QtWidgets.QGroupBox):
             return
 
         payload = ImageEmailPayload(to=info.to, subject_line=info.subject, data=image)
-        worker = OffThread(email_image, payload)
-
-        """
-        This can all be refactored using QThread builtins
-        """
-
-        @QtCore.Slot(Any)
-        def success(*args, **kwargs):
-            print(f"[thread] SUCCESS came back with: {args} and {kwargs}")
-            worker.deleteLater()
-
-        @QtCore.Slot(Any)
-        def error(*args, **kwargs):
-            print(f"[thread] ERROR came back with: {args} and {kwargs}")
-            worker.deleteLater()
-
-        worker.signals.success.connect(success)
-        worker.signals.failure.connect(error)
-        worker.start()
+        self.send_task(
+            email_image,
+            payload,
+            result_cb=lambda *a, **kw: print("result", *a, **kw),
+            finished_cb=lambda *a, **kw: print("finished", *a, **kw),
+        )
 
     def setMinimums(self, height: Optional[int]):
         if height is None:
@@ -169,10 +163,10 @@ class PreviewFrame(QtWidgets.QGroupBox):
         ratio = self.aspectRatio()
 
         height = max(height, self.image_min_height)
+        width = round(height * ratio)
 
-        print(f"setting min={height} and max={height * ratio}")
         self.setMinimumHeight(height)
-        self.setMinimumWidth(height * ratio)
+        self.setMinimumWidth(width)
 
     def reset(self):
         self.original_image = None

@@ -38,4 +38,7 @@ def get_email_contact_info() -> EmailContactInfo:
     """write custom email dialog? ugh"""
     dialog = EmailDialog()
     dialog.exec()  # doesn't matter if it succeeds...
-    return dialog.get_info()
+    info = dialog.get_info()
+    if info is None:
+        raise SystemError("Couldn't get info from email dialog")
+    return info

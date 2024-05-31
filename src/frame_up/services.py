@@ -1,3 +1,4 @@
+import json
 from typing import Any, Optional
 
 import zmq
@@ -13,33 +14,44 @@ service_index = {
     "vibrant": {"host": "localhost", "port": "8674"},
     "monochrome": {"host": "localhost", "port": "8675"},
 }
-timeout = 5  # seconds
+
+# Timeouts (in milliseconds)
+timeouts: dict[str, int] = {"connect": 1 * 1000, "send": 5 * 1000, "recv": 5 * 1000}
 
 
-def antique_filter(image: Image, intensity: Optional[float] = None) -> Image:
+def antique_filter(image: Image, intensity: float) -> Image:
     return get_filtered_image("antique", image, intensity)
 
 
-def vibrant_filter(image: Image, intensity: Optional[float] = None) -> Image:
+def vibrant_filter(image: Image, intensity: float) -> Image:
     return get_filtered_image("vibrant", image, intensity)
 
 
-def monochrome_filter(image: Image, intensity: Optional[float] = None) -> Image:
+def monochrome_filter(image: Image, intensity: float) -> Image:
     return get_filtered_image("monochrome", image, intensity)
 
 
-def send_recv_zmq(host: str, port: str, payload: str) -> Any:
+def send_recv_zmq(host: str, port: str, payload: str) -> Optional[Any]:
     connection = f"tcp://{host}:{port}"
 
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
-    socket.setsockopt(zmq.CONNECT_TIMEOUT, timeout * 1000)
-    socket.setsockopt(zmq.SNDTIMEO, timeout * 1000)
-    socket.setsockopt(zmq.RCVTIMEO, timeout * 1000)
-    socket.connect(connection)
 
-    socket.send_string(payload)
-    return socket.recv_json()
+    socket.setsockopt(zmq.CONNECT_TIMEOUT, timeouts["connect"])
+    socket.setsockopt(zmq.SNDTIMEO, timeouts["send"])
+    socket.setsockopt(zmq.RCVTIMEO, timeouts["recv"])
+    print(f"[zmq] 🔌{connection} | timeouts = {timeouts}")
+
+    try:
+        socket.send_string(payload)
+        return socket.recv_json()
+    except zmq.ZMQError as z:
+        print("[zmq error]", z)
+        return None
+    finally:
+        # socket.disconnect(connection)
+        # socket.close()
+        context.destroy()  # this may be enough
 
 
 def get_filtered_image(filter: str, image: Image, intensity: float = 1) -> Image:
@@ -49,10 +61,10 @@ def get_filtered_image(filter: str, image: Image, intensity: float = 1) -> Image
     if host is None or port is None:
         raise ValueError("couldn't find configuration for filter: ", filter)
 
-    payload = {"image": base64_encode_image(image), "intensity": intensity}
+    payload = json.dumps({"image": base64_encode_image(image), "intensity": intensity})
     response = send_recv_zmq(host, port, payload)
 
-    if response["status"] == "error":
+    if not response or response["status"] == "error":
         raise SystemError("antique_filter failed")
     return base64_decode_image(response["image"])
 
@@ -64,6 +76,6 @@ def email_image(payload: ImageEmailPayload) -> bool:
 
     response = send_recv_zmq(host, port, payload.to_microservice_json())
 
-    if not response["success"]:
+    if not response or not response["success"]:
         raise SystemError("send_email failed")
     return response["success"]
