@@ -6,9 +6,9 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QPalette
 
 from frame_up_gui.common import (
-    get_email_contact_info,
-    get_save_file_name,
-    open_file_name,
+    ask_email_contact_info,
+    ask_file_to_open,
+    ask_file_to_save,
 )
 from frame_up_gui.events import EventBus as bus
 from frame_up_gui.widgets.PreviewFrame import PreviewFrame
@@ -48,7 +48,7 @@ class CentralLayout(QtWidgets.QWidget):
 
         @QtCore.Slot()
         def input_pushed():
-            name, filters = open_file_name()
+            name, filters = ask_file_to_open()
             if len(name) == 0:
                 # empty string
                 return
@@ -113,12 +113,7 @@ class CentralLayout(QtWidgets.QWidget):
 
         @QtCore.Slot()
         def save_pushed():
-            # filename, filters = get_save_file_name()
-            print(f"saving to suggested path {export_text_box.text()}")
-            # bus.ExportPathChanged.change(name)
-            # trigger save w/ new file name
-            # save_to_disk(filename, )
-            bus.SaveCurrentImageemit(export_text_box.text())
+            bus.SaveCurrentImage.emit(export_text_box.text())
             load_suggested(export_text_box.text())
 
         save_button.clicked.connect(save_pushed)
@@ -128,12 +123,8 @@ class CentralLayout(QtWidgets.QWidget):
 
         @QtCore.Slot()
         def save_as_pushed():
-            filename, filters = get_save_file_name(export_text_box.text())
-            print(f"ya want to save to {filename}")
-            # bus.ExportPathChanged.change(name)
-            # trigger save w/ new file name
-            # save_to_disk(filename, )
-            bus.SaveCurrentImageemit(filename)
+            filename, filters = ask_file_to_save(export_text_box.text())
+            bus.SaveCurrentImage.emit(filename)
 
         save_as_button.clicked.connect(save_as_pushed)
 
@@ -144,7 +135,7 @@ class CentralLayout(QtWidgets.QWidget):
 
         @QtCore.Slot()
         def email_pushed():
-            info = get_email_contact_info()
+            info = ask_email_contact_info()
             if not info:
                 raise SystemError("Couldn't get email contact info from dialog...")
             bus.EmailCurrentImage.emit(info)

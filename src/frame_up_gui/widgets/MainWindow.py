@@ -7,9 +7,9 @@ from PySide6.QtGui import QPalette
 
 from frame_up_gui.App import FrameUpApp
 from frame_up_gui.common import (
-    get_email_contact_info,
-    get_save_file_name,
-    open_file_name,
+    ask_email_contact_info,
+    ask_file_to_open,
+    ask_file_to_save,
 )
 from frame_up_gui.events import EventBus as bus
 from frame_up_gui.widgets import CentralLayout
@@ -142,7 +142,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot()
     def open(self):
-        name, filter = open_file_name()
+        name, filter = ask_file_to_open()
         print(f"User picked {name} with applied filter {filter}")
         self.imagePathChanged(name)
 
@@ -151,13 +151,13 @@ class MainWindow(QtWidgets.QMainWindow):
         parsed_input = Path(self.sourcePath)
         suggested = get_suggested_filepath(parsed_input.parent, str(parsed_input.name))
         print("we suggested ", suggested)
-        filename, filter = get_save_file_name(str(suggested))
+        filename, filter = ask_file_to_save(str(suggested))
         print(f"User picked {filename} with applied filter {filter}")
-        bus.SaveCurrentImageemit(filename)
+        bus.SaveCurrentImage.emit(filename)
 
     @QtCore.Slot()
     def email(self):
-        info = get_email_contact_info()
+        info = ask_email_contact_info()
         if not info:
             raise SystemError("Couldn't get email contact info from dialog...")
         bus.EmailCurrentImage.emit(info)
