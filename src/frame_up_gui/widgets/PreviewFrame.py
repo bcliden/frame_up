@@ -10,7 +10,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QPalette
 
 from frame_up_gui.App import FrameUpApp
-from frame_up_gui.events import EmailCurrentImage, ImagePathChanged, SaveCurrentImage
+from frame_up_gui.events import EventBus as bus
 from frame_up_gui.tasks import BackgroundTasker
 from frame_up_gui.widgets.EmailDialog import EmailContactInfo
 
@@ -42,9 +42,9 @@ class PreviewFrame(QtWidgets.QGroupBox, BackgroundTasker):
         self.image_min_height = 300
 
         # event connections
-        ImagePathChanged.listen(self.load_file)
-        SaveCurrentImage.listen(self.save_image)
-        EmailCurrentImage.listen(self.email_image)
+        bus.ImagePathChanged.connect(self.load_file)
+        bus.SaveCurrentImage.connect(self.save_image)
+        bus.EmailCurrentImage.connect(self.email_image)
         FrameUpApp.instance().aboutToQuit.connect(self.clean_background_tasks)
 
         self.setMinimums(self.image_min_height)

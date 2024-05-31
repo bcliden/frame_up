@@ -9,27 +9,29 @@ from PySide6.QtCore import (
 )
 
 
-class Signals(QObject):
+class TaskSignals(QObject):
+    """Because signals ONLY work on QObjects"""
+
     result = Signal(object)
     done = Signal()
 
 
 class Task(QRunnable):
     """
-    Any action, run this inside a thread pool with pool.start()
+    Can perform any action. Run this inside a thread pool with pool.start()
     """
 
     fn: Callable
     args: Any
     kwargs: Any
-    signals: Signals
+    signals: TaskSignals
 
     def __init__(self, fn: Callable, *args, **kwargs) -> None:
         super().__init__()
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
-        self.signals = Signals()
+        self.signals = TaskSignals()
         self.setAutoDelete(True)
 
     @Slot()
@@ -91,7 +93,7 @@ class BackgroundTasker:
     def clean_background_tasks(self):
         print(f"waiting for {self.pool.activeThreadCount()} b.g. tasks to finish?")
         # success = self.pool.waitForDone(200)
-        success = self.pool.waitForDone(-1)
+        success = self.pool.waitForDone(-1)  # is this a problem? wait forever
         if success:
             print("thread pool closed cleanly")
         else:

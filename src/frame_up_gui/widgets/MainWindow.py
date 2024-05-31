@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 
 from frame_up.constants import accepted_image_extensions, version
 from frame_up.file import get_suggested_filepath
@@ -12,12 +11,7 @@ from frame_up_gui.common import (
     get_save_file_name,
     open_file_name,
 )
-from frame_up_gui.events import (
-    EmailCurrentImage,
-    ExportPathChanged,
-    ImagePathChanged,
-    SaveCurrentImage,
-)
+from frame_up_gui.events import EventBus as bus
 from frame_up_gui.widgets import CentralLayout
 
 
@@ -39,7 +33,7 @@ class MainWindow(QtWidgets.QMainWindow):
         def updateSourcePath(path: str):
             self.sourcePath = path
 
-        ImagePathChanged.listen(updateSourcePath)
+        bus.ImagePathChanged.connect(updateSourcePath)
 
         # enable drag and drop
         self.setAcceptDrops(True)
@@ -137,10 +131,10 @@ class MainWindow(QtWidgets.QMainWindow):
     """
 
     def imagePathChanged(self, path: str):
-        ImagePathChanged.broadcast(path)
+        bus.ImagePathChanged.emit(path)
 
     def exportPathChanged(self, path):
-        ExportPathChanged.broadcast(path)
+        bus.ExportPathChanged.emit(path)
 
     """
     Slots
@@ -159,14 +153,14 @@ class MainWindow(QtWidgets.QMainWindow):
         print("we suggested ", suggested)
         filename, filter = get_save_file_name(str(suggested))
         print(f"User picked {filename} with applied filter {filter}")
-        SaveCurrentImage.broadcast(filename)
+        bus.SaveCurrentImageemit(filename)
 
     @QtCore.Slot()
     def email(self):
         info = get_email_contact_info()
         if not info:
             raise SystemError("Couldn't get email contact info from dialog...")
-        EmailCurrentImage.broadcast(info)
+        bus.EmailCurrentImage.emit(info)
 
     @QtCore.Slot()
     def quit(self):
