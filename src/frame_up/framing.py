@@ -23,7 +23,6 @@ for file in files("frame_up.data").iterdir():
 
 
 def frame_image(img: Image) -> Image:
-    print(frames)
     frame = frames["portrait.jpeg"]
     if img.width > img.height:
         frame = frames["landscape.jpeg"]

@@ -1,9 +1,7 @@
 from pathlib import Path
-from typing import Optional
 
-from frame_up.file import get_suggested_filepath, save_to_disk
-from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtGui import QPalette
+from frame_up.file import get_suggested_filepath
+from PySide6 import QtCore, QtWidgets
 
 from frame_up_gui.common import (
     ask_email_contact_info,
@@ -11,7 +9,7 @@ from frame_up_gui.common import (
     ask_file_to_save,
 )
 from frame_up_gui.events import EventBus as bus
-from frame_up_gui.widgets.PreviewFrame import PreviewFrame
+from frame_up_gui.widgets.PreviewLayout import PreviewLayout
 
 
 class CentralLayout(QtWidgets.QWidget):
@@ -61,8 +59,9 @@ class CentralLayout(QtWidgets.QWidget):
         input_layout.addWidget(input_button, 0)
         layout.addWidget(input_group, 0)
 
-        preview = PreviewFrame(title="Preview Image Frame")
-        layout.addWidget(preview, 1)
+        print(PreviewLayout)
+        preview_layout = PreviewLayout(title="Preview Image Frame")
+        layout.addWidget(preview_layout, 1)
 
         export_group = QtWidgets.QGroupBox("Save your framed image")
         export_layout = QtWidgets.QGridLayout(export_group)

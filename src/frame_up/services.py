@@ -1,4 +1,5 @@
 import json
+import sys
 from typing import Any, Optional
 
 import zmq
@@ -36,15 +37,19 @@ def send_recv_zmq(host: str, port: str, payload: str) -> Optional[Any]:
 
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
-
     socket.setsockopt(zmq.CONNECT_TIMEOUT, timeouts["connect"])
     socket.setsockopt(zmq.SNDTIMEO, timeouts["send"])
     socket.setsockopt(zmq.RCVTIMEO, timeouts["recv"])
-    print(f"[zmq] 🔌{connection} | timeouts = {timeouts}")
+    print(f"[zmq] 🔌 {connection} | timeouts = {timeouts}")
 
+    socket.connect(connection)
     try:
+        print(f"[zmq] sending payload of size {sys.getsizeof(payload)}")
         socket.send_string(payload)
-        return socket.recv_json()
+        print(f"[zmq] sent string of size {sys.getsizeof(payload)}")
+        response = socket.recv_json()
+        print(f"[zmq] recieved json of size {sys.getsizeof(response)}")
+        return response
     except zmq.ZMQError as z:
         print("[zmq error]", z)
         return None

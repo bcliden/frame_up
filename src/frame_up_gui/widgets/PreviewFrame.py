@@ -1,9 +1,14 @@
-from typing import Optional, Self
+from typing import Callable, Optional, Self
 
 from frame_up.file import open_from_disk, save_to_disk
 from frame_up.framing import frame_image
 from frame_up.models import ImageEmailPayload
-from frame_up.services import email_image
+from frame_up.services import (
+    antique_filter,
+    email_image,
+    monochrome_filter,
+    vibrant_filter,
+)
 from PIL.Image import Image
 from PIL.ImageQt import ImageQt
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -14,20 +19,35 @@ from frame_up_gui.events import EventBus as bus
 from frame_up_gui.tasks import BackgroundTasker
 from frame_up_gui.widgets.EmailDialog import EmailContactInfo
 
+default_intensity = 100
 
-class PreviewFrame(QtWidgets.QGroupBox, BackgroundTasker):
+
+def load_image_after(function: Callable):
+    def wrapper(instance: "PreviewFrame", *args, **kwargs):
+        value = function(instance, *args, **kwargs)
+        instance.load_image()
+        return value
+
+    return wrapper
+
+
+class PreviewFrame(QtWidgets.QLabel, BackgroundTasker):
     # Pillow Types
-    original_image: Image | None
-    framed_image: Image | None
+    original_image: Optional[Image]
+    framed_image: Optional[Image]
 
     # QT Types
-    qt_image: ImageQt | None
-    qt_pixmap: QtGui.QPixmap | None
-    scaled_pixmap: QtGui.QPixmap | None
+    qt_image: Optional[ImageQt]
+    qt_pixmap: Optional[QtGui.QPixmap]
+    scaled_pixmap: Optional[QtGui.QPixmap]
 
     # Canvas management
-    image_canvas: QtWidgets.QLabel
+    # image_canvas: QtWidgets.QLabel
     image_min_height: int
+
+    path: Optional[str]
+    filter: Optional[str]
+    intensity: Optional[int]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,97 +61,49 @@ class PreviewFrame(QtWidgets.QGroupBox, BackgroundTasker):
 
         self.image_min_height = 300
 
+        self.path = None
+        self.filter = None
+        self.intensity = None
+
         # event connections
-        bus.ImagePathChanged.connect(self.load_file)
+        bus.ImagePathChanged.connect(self.set_image_path)
         bus.SaveCurrentImage.connect(self.save_image)
         bus.EmailCurrentImage.connect(self.email_image)
+
+        # TODO/bcl: should this just go in BackgroundTasker?
         FrameUpApp.instance().aboutToQuit.connect(self.clean_background_tasks)
 
-        self.setMinimums(self.image_min_height)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        # layout.setAlignment(QtCore.Qt.AlignCenter)
-
-        image = QtWidgets.QLabel(self)
-        # image.setScaledContents(True)
-        image.setBackgroundRole(QPalette.ColorRole.Base)
-        image.setAlignment(QtCore.Qt.AlignCenter)
-        image.setSizePolicy(
-            QtWidgets.QSizePolicy.Policy.Ignored,
-            QtWidgets.QSizePolicy.Policy.Ignored,
-        )
-        self.image_canvas = image
-        # add to directory?
-        layout.addWidget(self.image_canvas)
+        self.set_minimums(self.image_min_height)
+        self.setBackgroundRole(QPalette.ColorRole.Base)
+        self.setAlignment(QtCore.Qt.AlignCenter)
 
         # self.setStyleSheet("border: 1px solid blue;")
         # self.image.setStyleSheet("border: 3px solid red;")
 
-    def sizeHint(self) -> QtCore.QSize:
-        # override of: https://doc.qt.io/qt-6/qwidget.html#sizeHint-prop
-        hint = super().sizeHint()
-        # print(f"[pf.sizeHint original] = {hint}")
-        new_height = int(self.aspectRatio() * hint.height())
-        hint.setHeight(new_height)
-        # print(f"pf.sizeHint -> {hint}")
-        return hint
+    #
+    #   Event handler overrides
+    #
+
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        # override of https://doc.qt.io/qt-6/qwidget.html#resizeEvent
+        self.resize_image()
 
     def aspectRatio(self) -> float:
         pm = self.scaled_pixmap
 
-        # if not self.image.isVisible():
-        #     print("[no viz] using default aspect ratio of 1.0")
-        #     return 1.0
-
         if pm is None:
-            # print("[no pm ] using default aspect ratio of 1.0")
             return 1.0
 
         width, height = pm.width(), pm.height()
 
         if width == 0 or height == 0:
-            # print("[no w/h] using default aspect ratio of 1.0")
             return 1.0
 
-        ar = width / height
-        # print(f"aspect ratio for image is {pm.width()} / {pm.height()} = {ar} ")
-        return ar
+        return width / height
 
-    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
-        # override of https://doc.qt.io/qt-6/qwidget.html#resizeEvent
-        # return super().resizeEvent(event)
-        self.resizeImage()
-
-    def resizeImage(self) -> None:
-        if self.qt_pixmap is None:
-            print("no pixmap to resize. exiting")
-            return
-
-        geometry = self.image_canvas.geometry()
-        self.scaled_pixmap = self.qt_pixmap.scaled(
-            geometry.width(),
-            geometry.height(),
-            QtCore.Qt.AspectRatioMode.KeepAspectRatio,
-            QtCore.Qt.TransformationMode.SmoothTransformation,
-        )
-        self.image_canvas.setPixmap(self.scaled_pixmap)
-
-    @QtCore.Slot(str)
-    def load_file(self, path: str) -> None:
-        # if self.scaled_pixmap is None:
-        #     return
-
-        self.reset()
-
-        self.original_image = open_from_disk(path)
-        self.framed_image = frame_image(self.original_image)
-
-        self.qt_image = ImageQt(self.framed_image)
-        self.qt_pixmap = QtGui.QPixmap.fromImage(self.qt_image)
-        self.scaled_pixmap = self.qt_pixmap  # will be resized below
-
-        self.resizeImage()
-        self.setMinimums(height=self.scaled_pixmap.height())
+    #
+    #   Slots
+    #
 
     @QtCore.Slot(str)
     def save_image(self, filename) -> None:
@@ -155,7 +127,77 @@ class PreviewFrame(QtWidgets.QGroupBox, BackgroundTasker):
             finished_cb=lambda *a, **kw: print("finished", *a, **kw),
         )
 
-    def setMinimums(self, height: Optional[int]):
+    @load_image_after
+    @QtCore.Slot(str)
+    def set_image_path(self, path: str) -> None:
+        self.path = path
+
+    @load_image_after
+    @QtCore.Slot(str)
+    def set_filter(self, value: str) -> None:
+        if value.lower() == "none":
+            self.filter = None
+        else:
+            self.filter = value
+
+    @load_image_after
+    @QtCore.Slot(int)
+    def set_intensity(self, value: int) -> None:
+        self.intensity = value
+
+    def load_image(self) -> None:
+        if self.path is None:
+            print("can't load an image without a path.")
+            return
+
+        path = self.path
+        filter = self.filter
+        intensity = self.intensity or default_intensity
+
+        intensity2: float = intensity / 100
+
+        self.reset()
+
+        self.original_image = open_from_disk(path)
+        self.filtered_image = self.original_image
+
+        match filter:
+            case "Antique":
+                self.filtered_image = antique_filter(self.original_image, intensity2)
+            case "Vibrant":
+                self.filtered_image = vibrant_filter(self.original_image, intensity2)
+            case "Monochrome":
+                self.filtered_image = monochrome_filter(self.original_image, intensity2)
+            case None:
+                pass
+            case _:
+                raise ValueError("Unknown filter: ", filter)
+
+        self.framed_image = frame_image(self.filtered_image)
+
+        self.qt_image = ImageQt(self.framed_image)
+        self.qt_pixmap = QtGui.QPixmap.fromImage(self.qt_image)
+        self.scaled_pixmap = self.qt_pixmap  # will be resized below
+
+        self.resize_image()
+        self.set_minimums(height=self.scaled_pixmap.height())
+
+    def resize_image(self) -> None:
+        if self.qt_pixmap is None:
+            # print("no pixmap to resize. exiting")
+            return
+
+        geometry = self.geometry()
+        # print(f"previewframe w={geometry.width()} h={geometry.height()}")
+        self.scaled_pixmap = self.qt_pixmap.scaled(
+            geometry.width(),
+            geometry.height(),
+            QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+            QtCore.Qt.TransformationMode.SmoothTransformation,
+        )
+        self.setPixmap(self.scaled_pixmap)
+
+    def set_minimums(self, height: Optional[int]):
         if height is None:
             height = self.image_min_height
 
