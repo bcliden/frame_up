@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "frame-up"
-version = "0.0.1-beta" # or dynamic from git?
+version = "0.0.2" # or dynamic from git?
 authors = [{ name = "Benjamin Liden", email = "lidenb@oregonstate.edu" }]
 readme = "README.md"
 license = { file = "LICENSE" }

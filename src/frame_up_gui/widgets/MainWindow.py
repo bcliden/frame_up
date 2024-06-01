@@ -158,7 +158,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.Slot()
     def about(self):
-        text = f"""About Frame-Up v{version}
+        text = f"""About Frame-Up v.{version}
 
 This application is made by Benjamin Liden <lidenb@oregonstate.edu>
     for CS361: Software Engineering 1 at Oregon State University.
@@ -202,9 +202,13 @@ Craft your image
 The "Preview Image Frame" shows the current state of the application.
 Your selected image from step 1 is visible in the pane here and it is 
 framed inside the application's picture frame.
+
+Under "filters", browse and pick the effect you want applied to your image.
+The "intensity" slider can be used to fine-tune the effect.
+As you change these controls, the preview image will adjust accordingly.
                    
 
-Step 3:
+Step 3A:
 Save your image
 ---------------
                    
@@ -218,6 +222,14 @@ files won't be overwritten on accident.
 
 Use the "Save as..." button to open the system file dialog
 so you can save your image in a custom location with a custom name.
+
+Step 3B:
+Email your image
+----------------
+
+By pressing the "Email..." button, you can send the current image via email.
+A window will appear and ask for the receiver address and the subject line.
+The email will be sent in the background once you have confirmed.
 """
         mb = QtWidgets.QMessageBox()
         mb.setWindowTitle("Help")
@@ -231,13 +243,12 @@ so you can save your image in a custom location with a custom name.
 What's new in this version?
 
 {version}
-- Support for png and jpeg files
-- Open image from disk
-- Drag and drop images onto window
-- Default picture frame
-- Save/Save as... functionality
-- User Guide (see About > User Guide)
-- This change log :)
+- Image Filters
+    - Antique
+    - Vibrant
+    - Monochrome
+- Email functionality
+- User Guide updates
 """
         mb = QtWidgets.QMessageBox()
         mb.setWindowTitle("What's New")
@@ -251,7 +262,7 @@ What's new in this version?
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
         # can you drop something here? accept or reject
         # show window drop target
-        self.setBackgroundRole(QPalette.ColorRole.Dark)
+        # self.setBackgroundRole(QPalette.ColorRole.Dark)
         md = event.mimeData()
 
         # are the contents urls
@@ -276,7 +287,7 @@ What's new in this version?
 
     def dragLeaveEvent(self, event: QtGui.QDragLeaveEvent) -> None:
         # hide window drop target
-        self.setBackgroundRole(QPalette.ColorRole.Window)
+        # self.setBackgroundRole(QPalette.ColorRole.Window)
         return super().dragLeaveEvent(event)
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:

@@ -123,8 +123,8 @@ class PreviewFrame(QtWidgets.QLabel, BackgroundTasker):
         self.send_task(
             email_image,
             payload,
-            result_cb=lambda *a, **kw: print("result", *a, **kw),
-            finished_cb=lambda *a, **kw: print("finished", *a, **kw),
+            result_cb=lambda *a, **kw: print("[EMAIL] result:", *a, **kw),
+            finished_cb=lambda *a, **kw: print("[EMAIL] job finished.", *a, **kw),
         )
 
     @load_image_after

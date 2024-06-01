@@ -73,12 +73,12 @@ class BackgroundTasker:
             task.signals.result.connect(finished_cb)
 
         # Debug callbacks
-        task.signals.result.connect(
-            lambda *a, **kw: self.log(f"[{worker_id} result]", *a, **kw)
-        )
-        task.signals.done.connect(
-            lambda *a, **kw: self.log(f"[{worker_id} done]", *a, **kw)
-        )
+        # task.signals.result.connect(
+        #     lambda *a, **kw: self.log(f"[{worker_id} result]", *a, **kw)
+        # )
+        # task.signals.done.connect(
+        #     lambda *a, **kw: self.log(f"[{worker_id} done]", *a, **kw)
+        # )
 
         self.pool.start(task)
         print(f"sent worker (id={worker_id}) to pool")
