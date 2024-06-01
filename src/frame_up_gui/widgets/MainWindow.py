@@ -89,16 +89,6 @@ class MainWindow(QtWidgets.QMainWindow):
         quit_action.setShortcut("Ctrl+Q")
         fileMenu.addAction(quit_action)
 
-        # editMenu = toolbar.addMenu("&Edit")
-        # editMenu.setToolTipsVisible(True)
-        # editMenu.setToolTip("Edit the current operations")
-        # editMenu.addAction(open_action)
-        # editMenu.addAction(save_action)
-        # editMenu.addSeparator()
-        # editMenu.addAction(quit_action)
-
-        # toolbar.addSeparator()
-
         helpMenu = toolbar.addMenu("&Help")
         helpMenu.setToolTipsVisible(True)
         helpMenu.setToolTip("What's going on here?")

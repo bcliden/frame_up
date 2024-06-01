@@ -1,4 +1,3 @@
-from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import QComboBox, QFormLayout, QGroupBox, QSizePolicy
 
 from frame_up_gui.widgets.IntensitySlider import IntensitySlider
@@ -33,9 +32,3 @@ class PreviewLayout(QGroupBox):
         layout.addRow(frame)
         # layout.addWidget(frame)
         self.setLayout(layout)
-
-    @Slot()
-    def filter_image(self): ...
-
-    @Slot()
-    def debounced_filter_image(self): ...

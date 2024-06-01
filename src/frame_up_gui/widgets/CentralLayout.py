@@ -94,18 +94,7 @@ class CentralLayout(QtWidgets.QWidget):
         bus.ImagePathChanged.connect(load_suggested)
         bus.SaveCurrentImage.connect(load_suggested)
 
-        # TODO: when the image is saved elsewhere, trigger a re-calc too
-
         export_layout.addWidget(export_text_box, 0, 0, 1, 3)
-        # export_button = QtWidgets.QPushButton("Browse...")
-        # @QtCore.Slot()
-        # def export_pushed():
-        #     name, filters = get_save_file_name()
-        #     print(f"ya picked save path: {name}")
-        #     bus.ExportPathChanged.change(name)
-        #     # trigger save w/ new file name
-        # export_button.clicked.connect(export_pushed)
-        # export_layout.addWidget(export_button, 0)
 
         save_button = QtWidgets.QPushButton("Save")
         save_button.setToolTip("Save to suggested file path")
